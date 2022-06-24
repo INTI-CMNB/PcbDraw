@@ -12,7 +12,6 @@ import numpy as np
 import svgpathtools
 from itertools import islice
 import time
-import engineering_notation
 import decimal
 
 from wand.api import library
@@ -71,6 +70,18 @@ default_style = {
 float_re = r'([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)'
 adjust_to_edge = False
 board_bbox = None
+# Used for resistor values
+_suffix_lookup = {'y': 'e-24', 'z': 'e-21', 'a': 'e-18', 'f': 'e-15', 'p': 'e-12', 'n': 'e-9', 'u': 'e-6', 'm': 'e-3', 'k': 'e3', 'M': 'e6', 'G': 'e9', 'T': 'e12'}
+
+
+def eng_number(value):
+    """ Try to convert things like 4.7M to 4.7e6 """
+    value = value.strip()
+    for suffix in _suffix_lookup.keys():
+        if value[-1] == suffix:
+            value = value[:-1] + _suffix_lookup[suffix]
+            break
+    return decimal.Decimal(value)
 
 
 def get_board_size(board):
@@ -666,8 +677,7 @@ def get_resistance_from_value(value, ref, style, silent):
     res, tollerance = None, '5%'
     try:
         value = value.split(' ')
-        res = engineering_notation.EngNumber(value[0])
-        res = res.number
+        res = eng_number(value[0])
         if len(value) > 1:
             if '%' in value[1]:
                 if value[1] not in style["tht-resistor-band-colors"]:
