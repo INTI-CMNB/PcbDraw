@@ -54,7 +54,7 @@ board_bbox = None
 def get_board_size(board):
     global board_bbox
     if board_bbox is None:
-        board.SetVisibleAlls()
+        # board.SetVisibleAlls()
         board_bbox = board.ComputeBoundingBox(aBoardEdgesOnly=adjust_to_edge)
     return board_bbox
 
