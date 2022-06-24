@@ -91,4 +91,8 @@ ENV/
 # VSCode settings
 .vscode
 
+# SETEdit project
 *.epr
+
+# PyCharm settings
+.idea
