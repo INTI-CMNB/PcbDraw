@@ -1,3 +1,11 @@
+pcbdraw (0.9.0-2) stable; urgency=medium
+
+  * Fixed problems with board edges
+  * Fixes for KiCad v6 vias rendering
+  * Added more components and resistor colors
+
+ -- Salvador E. Tropea <stropea@inti.gob.ar>  Fri, 24 Jun 2022 10:51:16 -0300
+
 pcbdraw (0.9.0-1) stable; urgency=medium
 
   * New upstream release
