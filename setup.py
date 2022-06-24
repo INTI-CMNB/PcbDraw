@@ -27,7 +27,6 @@ setuptools.setup(
         "lxml",
         "mistune",
         "pybars3",
-        "wand",
         "pyyaml",
         "svgpathtools==1.4.1",
         "pcbnewTransition>=0.2",
