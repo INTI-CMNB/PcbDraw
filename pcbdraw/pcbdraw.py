@@ -108,7 +108,7 @@ class SvgPathItem:
     def is_same(p1, p2):
         dx = p1[0] - p2[0]
         dy = p1[1] - p2[1]
-        return math.sqrt(dx*dx+dy*dy) < 5
+        return math.sqrt(dx*dx+dy*dy) < 1000
 
     def format(self, first):
         ret = ""
