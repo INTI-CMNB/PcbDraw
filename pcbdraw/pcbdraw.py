@@ -15,6 +15,7 @@ import decimal
 from pcbnewTransition import pcbnew, KICAD_VERSION, isV6
 from lxml import etree, objectify
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from pcbdraw import convert
 
 
