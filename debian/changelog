@@ -1,10 +1,16 @@
+pcbdraw (0.9.0-3) stable; urgency=medium
+
+  * Fixed problems with KiCad 5 (PCB_VIA not defined)
+
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Tue, 28 Jun 2022 12:53:17 -0300
+
 pcbdraw (0.9.0-2) stable; urgency=medium
 
   * Fixed problems with board edges
   * Fixes for KiCad v6 vias rendering
   * Added more components and resistor colors
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Fri, 24 Jun 2022 10:51:16 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Fri, 24 Jun 2022 10:51:16 -0300
 
 pcbdraw (0.9.0-1) stable; urgency=medium
 
@@ -12,13 +18,13 @@ pcbdraw (0.9.0-1) stable; urgency=medium
   * KiCad 6 support
   * --shrink option
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Tue, 28 Dec 2021 10:06:24 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Tue, 28 Dec 2021 10:06:24 -0300
 
 pcbdraw (0.6.0-3) testing; urgency=medium
 
   * Includes two patches from upstream
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Mon, 21 Dec 2020 11:58:08 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Mon, 21 Dec 2020 11:58:08 -0300
 
 pcbdraw (0.6.0-2) testing; urgency=medium
 
@@ -26,22 +32,22 @@ pcbdraw (0.6.0-2) testing; urgency=medium
   * This release also contains a proposed method to compute better a
     bouding box for the PCB.
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Fri, 04 Sep 2020 16:08:13 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Fri, 04 Sep 2020 16:08:13 -0300
 
 pcbdraw (0.6.0-1) testing; urgency=medium
 
   * New upstream release
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Tue, 25 Aug 2020 10:24:00 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Tue, 25 Aug 2020 10:24:00 -0300
 
 pcbdraw (0.5.0-1) testing; urgency=medium
 
   * New upstream version
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Fri, 10 Jul 2020 08:43:54 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Fri, 10 Jul 2020 08:43:54 -0300
 
 pcbdraw (0.4.0-1) testing; urgency=low
 
   * Initial release.
 
- -- Salvador E. Tropea <stropea@inti.gob.ar>  Sat, 04 Jul 2020 19:30:32 -0300
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Sat, 04 Jul 2020 19:30:32 -0300
