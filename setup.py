@@ -26,7 +26,7 @@ setuptools.setup(
     install_requires=[
         "numpy",
         "lxml",
-        "mistune",
+        "mistune>=2.0.2",
         "pybars3",
         "pyyaml",
         "svgpathtools==1.4.1",
@@ -39,6 +39,9 @@ setuptools.setup(
     setup_requires=[
         "versioneer"
     ],
+    extras_require={
+        "dev": ["pytest", "types-pillow", "types-click", "types-PyYAML"],
+    },
     zip_safe=False,
     include_package_data=True,
     entry_points = {

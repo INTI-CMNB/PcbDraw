@@ -1,11 +1,14 @@
 ---
 params:
     - --remap remap.json
-img_name: img/populating_{}.png
+    - --libs KiCAD-base
+imgname: img/populating_{}.png
 template: simple
 type: html
-board: ../ArduinoLearningKitStarter/ArduinoLearningKitStarter.kicad_pcb
-libs: kicad-default
+board: ../resources/ArduinoLearningKitStarter.kicad_pcb
+initial_components:
+  - C1
+  - R13
 ...
 
 # Demo population manual

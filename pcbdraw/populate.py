@@ -1,55 +1,59 @@
 #!/usr/bin/env python3
-import sys
-import os
-PKG_BASE = os.path.dirname(__file__)
-# Give more priority to local modules than installed versions
-sys.path.insert(0, os.path.dirname(os.path.abspath(PKG_BASE)))
-
-import mistune
-import pcbdraw.mdrenderer
-import re
+from __future__ import annotations
 import codecs
-import pybars
-import yaml
-import argparse
-import subprocess
-import sysconfig
+import os
+import re
+import shlex
+import sys
 from copy import deepcopy
+from itertools import chain
+from typing import List, Optional, Any, Tuple, Dict
 
-TEMPLATES_SUBDIR = 'templates'
-data_path = [os.path.dirname(__file__)]
+import click
+from mistune.plugins.table import plugin_table # type: ignore
+from mistune.plugins.footnotes import plugin_footnotes # type: ignore
+import mistune # type: ignore
+import pybars # type: ignore
+import yaml
 
+import pcbdraw.mdrenderer
 
-class PcbDrawInlineLexer(mistune.InlineLexer):
-    def __init__(self, renderer, rules=None, **kwargs):
-        super(PcbDrawInlineLexer, self).__init__(renderer, rules=None, **kwargs)
+from .pcbnew_common import fakeKiCADGui
+from .plot import find_data_file, get_global_datapaths
+
+PKG_BASE = os.path.dirname(__file__)
+
+def parse_pcbdraw(lexer: Any, m: re.Match[str], state: Any) -> Any:
+    text = m.group(1)
+    side, components = text.split("|")
+    components = list(map(lambda x: x.strip(), components.split(",")))
+    return 'pcbdraw', side, components
+
+class PcbDrawInlineLexer(mistune.inline_parser.InlineParser): # type: ignore
+    def __init__(self, renderer: Any, **kwargs: Any) -> None:
+        super(PcbDrawInlineLexer, self).__init__(renderer, **kwargs)
         self.enable_pcbdraw()
 
-    def enable_pcbdraw(self):
-        self.rules.pcbdraw = re.compile(
+    def enable_pcbdraw(self) -> None:
+        pcbdraw_pattern = (
             r"\[\["                   # [[
             r"([\s\S]+?\|[\s\S]+?)"   # side| component
             r"\]\](?!\])"             # ]]
         )
-        self.default_rules.insert(3, "pcbdraw")
+        self.rules.insert(3, 'pcbdraw')
+        self.register_rule('pcbdraw', pcbdraw_pattern, parse_pcbdraw)
 
-    def output_pcbdraw(self, m):
-        text = m.group(1)
-        side, components = text.split("|")
-        components = list(map(lambda x: x.strip(), components.split(",")))
-        return self.renderer.pcbdraw(side, components)
-
-def Renderer(BaseRenderer):
-    class Tmp(BaseRenderer):
-        def __init__(self):
+def Renderer(BaseRenderer, initial_components: List[str]): # type: ignore
+    class Tmp(BaseRenderer): # type: ignore
+        def __init__(self, initial_components: List[str]) -> None:
             super(Tmp, self).__init__(escape=False)
-            self.items = []
-            self.current_item = None
-            self.active_side = "front"
-            self.visited_components = []
-            self.active_components = []
+            self.items: List[Dict[str, Any]]= []
+            self.current_item: Optional[Dict[str, Any]] = None
+            self.active_side: str = "front"
+            self.visited_components: List[str] = initial_components
+            self.active_components: List[str] = []
 
-        def append_comment(self, html):
+        def append_comment(self, html: str) -> None:
             if self.current_item is not None and self.current_item["type"] == "steps":
                 self.items.append(self.current_item)
             if self.current_item is None or self.current_item["type"] == "steps":
@@ -60,7 +64,7 @@ def Renderer(BaseRenderer):
                 }
             self.current_item["content"] += html
 
-        def append_step(self, step):
+        def append_step(self, step: Dict[str, Any]) -> None:
             if self.current_item is not None and self.current_item["type"] == "comment":
                 self.items.append(self.current_item)
             if self.current_item is None or self.current_item["type"] == "comment":
@@ -71,46 +75,47 @@ def Renderer(BaseRenderer):
                 }
             self.current_item["steps"].append(step)
 
-        def output(self):
+        def output(self) -> List[Dict[str, Any]]:
             items = self.items
-            items.append(self.current_item)
+            if self.current_item is not None:
+                items.append(self.current_item)
             return items
 
-        def pcbdraw(self, side, components):
+        def pcbdraw(self, side: str, components: List[str]) -> str:
             self.active_side = side
             self.visited_components += components
             self.active_components = components
             return ""
 
-        def block_code(self, code, lang):
-            retval = super(Tmp, self).block_code(code, lang)
+        def block_code(self, children: str, info: Optional[str]=None) -> Any:
+            retval = super(Tmp, self).block_code(children, info)
             self.append_comment(retval)
             return retval
 
-        def block_quote(self, text):
+        def block_quote(self, text: str) -> Any:
             retval = super(Tmp, self).block_quote(text)
             self.append_comment(retval)
             return retval
 
-        def block_html(self, html):
+        def block_html(self, html: str) -> Any:
             retval = super(Tmp, self).block_html(html)
             self.append_comment(retval)
             return retval
 
-        def header(self, text, level, raw=None):
-            retval = super(Tmp, self).header(text, level, raw)
+        def heading(self, children: str, level: int) -> Any:
+            retval = super(Tmp, self).heading(children, level)
             self.append_comment(retval)
             return retval
 
-        def hrule(self):
-            retval = super(Tmp, self).hrule()
+        def thematic_break(self) -> Any:
+            retval = super(Tmp, self).thematic_break()
             self.append_comment(retval)
             return retval
 
-        def list(self, body, ordered=True):
+        def list(self, text: Any, ordered: bool, level: Any, start: Any=None) -> str:
             return ""
 
-        def list_item(self, text):
+        def list_item(self, text: str, level: Any) -> str:
             step = {
                 "side": self.active_side,
                 "components": self.visited_components,
@@ -120,18 +125,18 @@ def Renderer(BaseRenderer):
             self.append_step(deepcopy(step))
             return ""
 
-        def paragraph(self, text):
+        def paragraph(self, text: str) -> Any:
             retval = super(Tmp, self).paragraph(text)
             self.append_comment(retval)
             return retval
 
-        def table(self, header, body):
+        def table(self, header: str, body: str) -> Any:
             retval = super(Tmp, self).table(header, body)
             self.append_comment(retval)
             return retval
-    return Tmp()
+    return Tmp(initial_components)
 
-def load_content(filename):
+def load_content(filename: str) -> Tuple[Optional[Dict[str, Any]], str]:
     header = None
     with codecs.open(filename, encoding="utf-8") as f:
         content = f.read()
@@ -142,24 +147,26 @@ def load_content(filename):
                 content = content[end+3:]
     return header, content
 
-def parse_content(renderer, content):
+def parse_content(renderer: Any, content: str) -> List[Dict[str, Any]]:
     lexer = PcbDrawInlineLexer(renderer)
     processor = mistune.Markdown(renderer=renderer, inline=lexer)
+    plugin_table(processor)
+    plugin_footnotes(processor)
     processor(content)
-    return renderer.output()
+    return renderer.output() # type: ignore
 
-def read_template(filename):
+def read_template(filename: str) -> str:
     with codecs.open(filename, encoding="utf-8") as f:
         return f.read()
 
-def generate_html(template, input):
-    input = {
+def generate_html(template: str, input: List[Dict[str, Any]]) -> bytes:
+    input_dict = {
         "items": input
     }
-    template = pybars.Compiler().compile(template)
-    return template(input).encode("utf-8")
+    template_fn = pybars.Compiler().compile(template)
+    return template_fn(input_dict).encode("utf-8") # type: ignore
 
-def generate_markdown(input):
+def generate_markdown(input: List[Dict[str, Any]]) -> bytes:
     output = ""
     for item in input:
         if item["type"] == "comment":
@@ -170,188 +177,136 @@ def generate_markdown(input):
                 output += "![step](" + x["img"] + ")\n\n"
     return output.encode("utf-8")
 
-def flatten(l):
-    return [item for sublist in l for item in sublist]
 
-def generate_images(content, boardfilename, libs, parameters, name, outdir):
+def generate_images(content: List[Dict[str, Any]], boardfilename: str,
+                    plot_args: List[str], name: str, outdir: str) -> List[Dict[str, Any]]:
     dir = os.path.dirname(os.path.join(outdir, name))
     if not os.path.exists(dir):
         os.makedirs(dir)
     counter = 0
     for item in content:
-        if item["type"] == "comment":
+        if item["type"] != "steps":
             continue
         for x in item["steps"]:
             counter += 1
             filename = name.format(counter)
-            generate_image(boardfilename, libs, x["side"], x["components"],
-                x["active_components"], parameters, os.path.join(outdir, filename))
+            generate_image(boardfilename, x["side"], x["components"],
+                x["active_components"], plot_args, os.path.join(outdir, filename))
             x["img"] = filename
     return content
 
-def generate_image(boardfilename, libs, side, components, active, parameters, outputfile):
-    # Use the pcbdraw.py script from the same point this script was executed
-    script = os.path.join(PKG_BASE, "pcbdraw.py")
-    command = ['python3', script, "-f", ",".join(components), "-a", ",".join(active)]
+def generate_image(boardfilename: str, side: str, components: List[str],
+                   active: List[str], plot_args: List[str], outputfile: str) -> None:
+    from copy import deepcopy
+
+    from .ui import plot
+
+    plot_args = deepcopy(plot_args)
+
     if side.startswith("back"):
-        command.append("-b")
-    command += flatten(map(lambda x: x.split(" ", 1), parameters))
-    if libs:
-        command.append("--libs=" + libs)
-    command.append(boardfilename)
-    command.append(outputfile)
+        plot_args += ["--side", "back"]
+    plot_args += ["--filter", ",".join(components)]
+    plot_args += ["--highlight", ",".join(active)]
+    plot_args += [boardfilename, outputfile]
     try:
-        output = subprocess.check_output(command, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        print("PcbDraw failed with code {} and output: ".format(e.returncode))
-        print(e.output)
-        sys.exit(1)
+        plot.main(args=plot_args)
+    except SystemExit as e:
+        if e.code is not None and e.code != 0:
+            raise e from None
 
-def find_command(list, command):
-    for x in list:
-        if x.startswith(command):
-            return x
-    return None
+def get_data_path() -> List[str]:
+    paths: List[str] = []
+    paths += filter(lambda x: len(x) > 0, os.environ.get("PCBDRAW_LIB_PATH", "").split(":"))
+    paths += [os.path.join(PKG_BASE, "resources", "templates")]
+    paths += get_global_datapaths()
+    return paths
 
-def relativize_header_paths(header, to):
-    for key in ["template", "board", "libs"]:
-        if key not in header:
-            continue
-        if os.path.isabs(header[key]) or header[key].startswith("builtin:"):
-            continue
-        if key == 'libs' and header[key] in ["default", "kicad-default", "eagle-default"]:
-            continue
-        x = os.path.join(to, header[key])
-        if os.path.isfile(x):
-            header[key] = os.path.normpath(x)
-    if "params" in header:
-        for i, arg in enumerate(header["params"]):
-            for key in ["--style", "--remap"]:
-                c = find_command([arg], key)
-                if c is None:
-                    continue
-                y = c.split(" ")
-                command, arg = y[0], y[1]
-                if os.path.isabs(arg) or arg.strip().startswith("builtin:"):
-                    continue
-                header["params"][i] = command + " " + os.path.normpath(os.path.join(to, arg))
-    return header
+def prepare_params(params: List[str]) -> List[str]:
+    p = [shlex.split(x) for x in params]
+    return list(chain(*p))
 
-def merge_args(args, header):
-    for key in filter(lambda x: not x.startswith("_"), dir(args)):
-        val = getattr(args, key)
-        if val is not None:
-            header[key] = val
-    if "params" not in header:
-        header["params"] = []
-    return header
+@click.command()
+@click.argument("input", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.argument("output", type=click.Path(file_okay=False, dir_okay=True))
+@click.option("--board", "-b", type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    default=None, help="override input board")
+@click.option("--imgname", "-t", type=str, default=None,
+    help="overide image name template, should contain exactly one {{}}")
+@click.option("--template", "-t", type=str, default=None,
+    help="override handlebars template for HTML output")
+@click.option("--type", "-t", type=click.Choice(["md", "html"]), default=None,
+    help="override output type: markdown or HTML")
+def populate(input: str, output: str, board: Optional[str], imgname: Optional[str],
+             template: Optional[str], type: Optional[str]) -> None:
+    """
+    Create assembly step-by-step guides
+    """
 
-def validate_args(args):
-    required = set(["img_name", "type", "output", "input", "board", "libs"])
-    missing = required - set(args.keys())
-    if missing:
-        raise RuntimeError("Missing following parameters: {}"
-                           .format(", ".join(missing)))
-    if args["type"] == "html":
-        if "template" not in args:
-            raise RuntimeError("Missing following parameters: template")
-    elif args["type"] == "md":
-        if "template" in args:
-            print("Warning: extra parameter 'template'")
-    else:
-        raise RuntimeError("Unsupported type parameter, 'md' or 'html' expected, got '{}'"
-            .format(args["type"]))
-    required.add("template")
-    required.add("params")
-    extra = set(args.keys()) - required
-    for x in extra:
-        print("Warning: extra parameter '" + x + "'")
-    if args["params"] is None:
-        args["params"] = []
+    app = fakeKiCADGui()
 
-def find_data_file(name, ext, subdir):
-    if os.path.isfile(name):
-        return name
-    # Not a file here, needs extension?
-    ln = len(ext)
-    if name[-ln:] != ext:
-        name += ext
-        if os.path.isfile(name):
-            return name
-    # Try in the data path
-    for p in data_path:
-        fn = os.path.join(p, subdir, name)
-        if os.path.isfile(fn):
-            return fn
-    raise RuntimeError("Missing '" + subdir + "' " + name)
-
-def setup_data_path():
-    global data_path
-    share = os.path.join('share', 'pcbdraw')
-    entries = len(data_path)
-    scheme_names = sysconfig.get_scheme_names()
-    if os.name == 'posix':
-        if 'posix_user' in scheme_names:
-            data_path.append(os.path.join(sysconfig.get_path('data', 'posix_user'), share))
-        if 'posix_prefix' in scheme_names:
-            data_path.append(os.path.join(sysconfig.get_path('data', 'posix_prefix'), share))
-    elif os.name == 'nt':
-        if 'nt_user' in scheme_names:
-            data_path.append(os.path.join(sysconfig.get_path('data', 'nt_user'), share))
-        if 'nt' in scheme_names:
-            data_path.append(os.path.join(sysconfig.get_path('data', 'nt'), share))
-    if len(data_path) == entries:
-        data_path.append(os.path.join(sysconfig.get_path('data'), share))
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="source file")
-    parser.add_argument("output", help="output directory")
-    parser.add_argument("-p", "--params", help="additional flags for PcbDraw")
-    parser.add_argument("-b", "--board", help=".kicad_pcb file with a board")
-    parser.add_argument("-i", "--img_name", help="image name template, should contain exactly one {{}}")
-    parser.add_argument("-t", "--template", help="handlebars template for HTML output", default='simple')
-    parser.add_argument("-f", "--type", help="output type: md or html")
-    parser.add_argument("-l", "--libs", help="libraries for PcbDraw")
-
-    args = parser.parse_args()
-
-    setup_data_path()
+    data_path = get_data_path()
     try:
-        header, content = load_content(args.input)
+        header, content = load_content(input)
     except IOError:
-        print("Cannot open source file " + args.input)
-        sys.exit(1)
-    header = relativize_header_paths(header, os.path.dirname(args.input))
-    args = merge_args(args, header)
+        sys.exit("Cannot open source file " + input)
 
+    # We change board and output paths to absolute; then we change working
+    # directory to the input file so we resolve everything according to it
+    if board is not None:
+        board = os.path.realpath(board)
+    outputpath = os.path.realpath(output)
+    input_dir = os.path.dirname(input)
+    if input_dir != '':
+        os.chdir(input_dir)
+
+    # If no overriding is specified, load it from the template
     try:
-        validate_args(args)
-    except RuntimeError as e:
-        print(e)
-        sys.exit(1)
+        if board is None:
+            if header is None:
+                raise KeyError("board")
+            board = header["board"]
+        if imgname is None:
+            if header is None:
+                raise KeyError("imgname")
+            imgname = header["imgname"]
+        if type is None:
+            if header is None:
+                raise KeyError("type")
+            type = header["type"]
+        if template is None and type == "html":
+            if header is None:
+                raise KeyError("template")
+            template = header["template"]
+    except KeyError as e:
+        sys.exit(f"Missing parameter {e} either in template file or source header")
 
-    if args["type"] == "html":
-        renderer = Renderer(mistune.Renderer)
+    if type == "html":
+        renderer = Renderer(mistune.renderers.HTMLRenderer, header.get("initial_components", [])) # type: ignore
         outputfile = "index.html"
         try:
-            template = read_template(find_data_file(args["template"], '.handlebars', TEMPLATES_SUBDIR))
+            assert template is not None
+            template_file = find_data_file(template, '.handlebars', data_path)
+            if template_file is None:
+                raise RuntimeError(f"Cannot find template '{template}'")
+            template = read_template(template_file)
         except IOError:
-            print("Cannot open template file " + args["template"])
-            sys.exit(1)
+            sys.exit("Cannot open template file " + str(template))
     else:
-        renderer = Renderer(pcbdraw.mdrenderer.MdRenderer)
+        renderer = Renderer(pcbdraw.mdrenderer.MdRenderer, header.get("initial_components", [])) # type: ignore
         outputfile = "index.md"
-    content = parse_content(renderer, content)
-    content = generate_images(content, args["board"], args["libs"],
-        args["params"], args["img_name"], args["output"])
-    if args["type"] == "html":
-        output = generate_html(template, content)
+    parsed_content = parse_content(renderer, content)
+    if header is None:
+        raise RuntimeError("Parameters were not specified in the template")
+    parsed_content = generate_images(parsed_content, board, prepare_params(header["params"]),
+                                     imgname, outputpath)
+    if type == "html":
+        assert template is not None
+        output_content = generate_html(template, parsed_content)
     else:
-        output = generate_markdown(content)
+        output_content = generate_markdown(parsed_content)
 
-    with open(os.path.join(args["output"], outputfile), "wb") as f:
-        f.write(output)
+    with open(os.path.join(outputpath, outputfile), "wb") as f:
+        f.write(output_content)
 
 if __name__ == '__main__':
-    main()
+    populate()
