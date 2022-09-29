@@ -5,12 +5,12 @@
  # -*- coding: utf-8 -*-
  
  import setuptools
-@@ -34,7 +35,7 @@
-         "versioneer"
-     ],
+@@ -43,7 +44,7 @@
+         "dev": ["pytest", "types-pillow", "types-click", "types-PyYAML"],
+     },
      zip_safe=False,
 -    include_package_data=True,
 +    include_package_data=False,
      entry_points = {
          "console_scripts": [
-             "pcbdraw=pcbdraw.pcbdraw:main",
+             "pcbdraw=pcbdraw.ui:run"

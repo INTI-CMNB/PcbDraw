@@ -1,4 +1,5 @@
-pcbdraw/templates/ /usr/share/pcbdraw/
-pcbdraw/styles/ /usr/share/pcbdraw/
-pcbdraw/footprints/ /usr/share/pcbdraw/
+pcbdraw/resources/templates/ /usr/share/pcbdraw/
+pcbdraw/resources/styles/ /usr/share/pcbdraw/
+pcbdraw/resources/footprints/ /usr/share/pcbdraw/
+pcbdraw/resources/defaultKiCadSettings /usr/share/pcbdraw/
 

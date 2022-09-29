@@ -5,12 +5,12 @@ Maintainer: Salvador E. Tropea <stropea@inti.gob.ar>
 Build-Depends: debhelper (>=11~), dh-python, python3-all
 Standards-Version: 4.1.4
 Homepage: https://github.com/yaqwsx/PcbDraw
-X-Python3-Version: >= 3.2
+X-Python3-Version: >= 3.7
 
 Package: pcbdraw
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-lxml, python3-mistune, python3-wand, python3-pybars
+Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-lxml, python3-mistune, python3-pybars, python3-pil, python3-click, python3-pyvirtualdisplay (>= 2.2)
 Description: Converts KiCAD boards into nice looking 2D drawings
  Convert your KiCAD boards into nice looking 2D drawings suitable for pinout
  diagrams. Never draw them manually again!
