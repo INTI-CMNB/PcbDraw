@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 #!/usr/bin/make
-=======
 
-
-.PHONY: package release test test-system test-unit mypy
->>>>>>> d717719eeaa50df65b13bc827e688543d8182b79
+.PHONY: package release deb deb_clean test test-system test-unit mypy
 
 all: package
 
@@ -30,7 +26,7 @@ test-unit:
 	cd test/units && pytest
 
 mypy:
-	cd pcbdraw && mypy .
+	cd pcbdraw && python3 -m mypy .
 
 clean:
 	-rm -rf dist build
@@ -58,5 +54,3 @@ deb_sig:
 
 deb_clean:
 	fakeroot debian/rules clean
-
-.PHONY: package release deb deb_clean
