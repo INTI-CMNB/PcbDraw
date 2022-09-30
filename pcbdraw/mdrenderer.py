@@ -12,7 +12,11 @@
     :licence: WTFPL 2
 """
 
-from mistune.renderers import BaseRenderer  # type: ignore
+try:
+    from mistune.renderers import BaseRenderer  # type: ignore
+except ModuleNotFoundError:
+    from mistune import Renderer  # type: ignore
+    BaseRenderer = Renderer
 
 
 class MdRenderer(BaseRenderer):
@@ -41,6 +45,10 @@ class MdRenderer(BaseRenderer):
         return '---\n'
 
     def heading(self, text, level, raw=None):
+        return '#'*level + " " + text + '\n\n'
+
+    # Old mistune
+    def header(self, text, level, raw=None):
         return '#'*level + " " + text + '\n\n'
 
     def paragraph(self, text):
