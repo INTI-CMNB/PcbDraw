@@ -331,7 +331,7 @@ def populate(input: str, output: str, board: Optional[str], imgname: Optional[st
         except IOError:
             sys.exit("Cannot open template file " + str(template))
     else:
-        renderer = Renderer(pcbdraw.mdrenderer.MdRenderer, header.get("initial_components", [])) # type: ignore
+        renderer = Renderer(mdrenderer.MdRenderer, header.get("initial_components", [])) # type: ignore
         outputfile = "index.md"
     parsed_content = parse_content(renderer, content)
     if header is None:
