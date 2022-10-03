@@ -16,8 +16,17 @@ import mistune # type: ignore
 import pybars # type: ignore
 import yaml
 
-import pcbdraw.mdrenderer
+# Add ../ to the path
+# Works if this script is executed without installing the module
+script_dir = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+prev_dir = os.path.dirname(script_dir)
+if prev_dir not in sys.path:
+    sys.path.insert(0, sys.path)
+# Pretend we are part of a module
+# Avoids: ImportError: attempted relative import with no known parent package
+__package__ = os.path.basename(script_dir)
 
+from . import mdrenderer
 from .pcbnew_common import fakeKiCADGui
 from .plot import find_data_file, get_global_datapaths
 
