@@ -21,7 +21,7 @@ import yaml
 script_dir = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 prev_dir = os.path.dirname(script_dir)
 if prev_dir not in sys.path:
-    sys.path.insert(0, sys.path)
+    sys.path.insert(0, prev_dir)
 # Pretend we are part of a module
 # Avoids: ImportError: attempted relative import with no known parent package
 __package__ = os.path.basename(script_dir)
