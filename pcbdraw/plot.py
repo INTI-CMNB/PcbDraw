@@ -20,7 +20,6 @@ PKG_BASE = os.path.dirname(__file__)
 prev_dir = os.path.dirname(os.path.abspath(PKG_BASE))
 if prev_dir not in sys.path:
     sys.path.insert(0, prev_dir)
-    print(sys.path)
 from pcbdraw.unit import read_resistance
 import svgpathtools # type: ignore
 from lxml import etree, objectify # type: ignore
