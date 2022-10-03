@@ -7,6 +7,7 @@ import json
 import math
 import os
 import re
+import sys
 import sysconfig
 import tempfile
 from dataclasses import dataclass, field
@@ -18,6 +19,10 @@ try:
     import numpy.typing
 except ModuleNotFoundError:
     pass
+PKG_BASE = os.path.dirname(__file__)
+prev_dir = os.path.dirname(os.path.abspath(PKG_BASE))
+if prev_dir not in sys.path:
+    sys.path.insert(0, prev_dir)
 from pcbdraw.unit import read_resistance
 import svgpathtools # type: ignore
 from lxml import etree, objectify # type: ignore
@@ -30,9 +35,6 @@ Point = Tuple[Numeric, Numeric]
 # Matrix = np.typing.NDArray[np.float32] Disabled because we not always have np.typing
 Matrix = Any
 Box = Tuple[Numeric, Numeric, Numeric, Numeric]
-
-
-PKG_BASE = os.path.dirname(__file__)
 
 etree.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 
