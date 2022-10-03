@@ -124,12 +124,15 @@ class WarningStderrReporter:
     help="Outline width in mm")
 @click.option("--show-lib-paths", is_flag=True,
     help="Show library paths and quit")
+@click.option("--no-warn-back", is_flag=True,
+    help="Don't show warnings about back footprints")
 def plot(input: str, output: str, style: Optional[str], libs: List[str],
          placeholders: bool, remap: str, drill_holes: bool, side: str,
          mirror: bool, highlight: List[str], filter: Optional[List[str]],
          vcuts: bool, dpi: int, margin: float, silent: bool, werror: bool,
          resistor_values: List[str], resistor_flip: List[str], components: bool,
-         paste: bool, outline_width: float, show_lib_paths: bool) -> int:
+         paste: bool, outline_width: float, show_lib_paths: bool,
+         no_warn_back: bool) -> int:
     """
     Create a stylized drawing of the PCB.
     """
@@ -167,7 +170,7 @@ def plot(input: str, output: str, style: Optional[str], libs: List[str],
 
     if components:
         plotter.plot_plan.append(
-            build_plot_components(remap, highlight, filter, resistor_flip, resistor_values))
+            build_plot_components(remap, highlight, filter, resistor_flip, resistor_values, no_warn_back))
     if placeholders:
         plotter.plot_plan.append(PlotPlaceholders())
 
@@ -180,7 +183,7 @@ def plot(input: str, output: str, style: Optional[str], libs: List[str],
     return 0
 
 def build_plot_components(remap: str, highlight: List[str], filter: Optional[List[str]],
-                          resistor_flip: List[str], resistor_values_input: List[str]) \
+                          resistor_flip: List[str], resistor_values_input: List[str], no_warn_back: bool) \
                           -> PlotComponents:
     remapping = load_remapping(remap)
     def remapping_fun(ref: str, lib: str, name: str) -> Tuple[str, str]:
@@ -203,7 +206,8 @@ def build_plot_components(remap: str, highlight: List[str], filter: Optional[Lis
 
     plot_components = PlotComponents(
         remapping=remapping_fun,
-        resistor_values=resistor_values)
+        resistor_values=resistor_values,
+        no_warn_back=no_warn_back)
 
     if filter is not None:
         filter_set = set(filter)
