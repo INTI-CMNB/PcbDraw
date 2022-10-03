@@ -7,6 +7,7 @@ import json
 import math
 import os
 import re
+import sys
 import sysconfig
 import tempfile
 from dataclasses import dataclass, field
@@ -15,6 +16,11 @@ from typing import Callable, Dict, List, Optional, Tuple, TypeVar, Union, Any
 
 import numpy as np
 import numpy.typing
+PKG_BASE = os.path.dirname(__file__)
+prev_dir = os.path.dirname(os.path.abspath(PKG_BASE))
+if prev_dir not in sys.path:
+    sys.path.insert(0, prev_dir)
+    print(sys.path)
 from pcbdraw.unit import read_resistance
 import svgpathtools # type: ignore
 from lxml import etree, objectify # type: ignore
@@ -26,9 +32,6 @@ Numeric = Union[int, float]
 Point = Tuple[Numeric, Numeric]
 Matrix = np.typing.NDArray[np.float32]
 Box = Tuple[Numeric, Numeric, Numeric, Numeric]
-
-
-PKG_BASE = os.path.dirname(__file__)
 
 etree.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 
