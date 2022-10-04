@@ -1,5 +1,8 @@
 # PcbDraw
 
+**IMPORTANT!: The 1.0.0 version is incompatible with previous releases. For
+a usable version please check the `v0.9.0_maintain` branch.**
+
 Convert your KiCAD boards into nice looking 2D drawings suitable for pinout
 diagrams. Never draw them manually again!
 
