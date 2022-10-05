@@ -1201,7 +1201,6 @@ class PcbPlotter():
             popt.SetMirror(False)
             popt.SetSubtractMaskFromSilk(True)
             popt.SetDrillMarksType(0) # NO_DRILL_SHAPE
-            pctl.SetLayer(pcbnew.Edge_Cuts)
             try:
                 popt.SetPlotOutlineMode(False)
             except:
