@@ -12,9 +12,13 @@ from tempfile import TemporaryDirectory
 from typing import Callable, Dict, List, Optional, Tuple, Union, Any, Generator
 from pathlib import Path
 import numpy as np
+
+# We import the typing under try-catch to allow runtime for systems that have
+# old Numpy that don't feature the numpy.typing module, but we want to preserve
+# type checking.
 try:
     import numpy.typing
-except ModuleNotFoundError:
+except ImportError:
     pass
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
