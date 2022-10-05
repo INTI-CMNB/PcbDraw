@@ -500,6 +500,7 @@ def get_layers(board, colors, defs, toPlot):
         popt.SetScale(1)
         popt.SetMirror(False)
         popt.SetSubtractMaskFromSilk(True)
+        pctl.SetLayer(pcbnew.Edge_Cuts)
         try:
             popt.SetPlotOutlineMode(False)
         except:
@@ -555,6 +556,7 @@ def get_board_substrate(board, colors, defs, holes, back, silk):
         popt.SetScale(1)
         popt.SetMirror(False)
         popt.SetSubtractMaskFromSilk(True)
+        pctl.SetLayer(pcbnew.Edge_Cuts)
         try:
             popt.SetPlotOutlineMode(False)
         except:
