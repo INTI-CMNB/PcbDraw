@@ -11,16 +11,15 @@ from typing import List, Optional, Any, Tuple, Dict
 
 import click
 import mistune # type: ignore
+# The following try-catch is used to support mistune 0.8.4 and 2.x
 try:
     from mistune.plugins.table import plugin_table # type: ignore
     from mistune.plugins.footnotes import plugin_footnotes # type: ignore
     InlineParser = mistune.inline_parser.InlineParser
     HTMLRenderer = mistune.renderers.HTMLRenderer
-    mistune2 = True
 except ModuleNotFoundError:
     InlineParser = mistune.InlineLexer
     HTMLRenderer = mistune.Renderer
-    mistune2 = False
 import pybars # type: ignore
 import yaml
 
@@ -57,13 +56,17 @@ class PcbDrawInlineLexer(InlineParser): # type: ignore
             r"([\s\S]+?\|[\s\S]+?)"   # side| component
             r"\]\](?!\])"             # ]]
         )
-        if mistune2:
+        if hasattr(self, 'register_rule'):
+            # mistune v2 API
             self.rules.insert(3, 'pcbdraw')
             self.register_rule('pcbdraw', pcbdraw_pattern, parse_pcbdraw)
         else:
+            # mistune v0.8.4
             self.rules.pcbdraw = re.compile(pcbdraw_pattern)
             self.default_rules.insert(3, 'pcbdraw')
 
+    # This method is invoked by the old mistune API (i.e. v0.8.4)
+    # For the new API we register `parse_pcbdraw`
     def output_pcbdraw(self, m: re.Match[str]) -> Any:
         _, side, components = parse_pcbdraw(self, m)
         return self.renderer.pcbdraw(side, components)
@@ -133,13 +136,13 @@ def Renderer(BaseRenderer, initial_components: List[str]): # type: ignore
             self.append_comment(retval)
             return retval
 
-        # Old mistune
+        # Mistune 0.8.4 API
         def header(self, text: str, level: int, raw: Optional[str]=None) -> Any:
             retval = super(Tmp, self).header(text, level, raw)
             self.append_comment(retval)
             return retval
 
-        # Old mistune
+        # Mistune 0.8.4 API
         def hrule(self) -> Any:
             retval = super(Tmp, self).hrule()
             self.append_comment(retval)
@@ -188,9 +191,12 @@ def load_content(filename: str) -> Tuple[Optional[Dict[str, Any]], str]:
 def parse_content(renderer: Any, content: str) -> List[Dict[str, Any]]:
     lexer = PcbDrawInlineLexer(renderer)
     processor = mistune.Markdown(renderer=renderer, inline=lexer)
-    if mistune2:
+    try:
         plugin_table(processor)
         plugin_footnotes(processor)
+    except NameError:
+        # Mistune v0.8.4 doesn't define the above functions
+        pass
     processor(content)
     return renderer.output() # type: ignore
 

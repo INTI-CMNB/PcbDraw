@@ -12,6 +12,7 @@
     :licence: WTFPL 2
 """
 
+# The following try-catch is used to support mistune 0.8.4 and 2.x
 try:
     from mistune.renderers import BaseRenderer  # type: ignore
 except ModuleNotFoundError:
@@ -47,9 +48,8 @@ class MdRenderer(BaseRenderer):
     def heading(self, text, level, raw=None):
         return '#'*level + " " + text + '\n\n'
 
-    # Old mistune
-    def header(self, text, level, raw=None):
-        return '#'*level + " " + text + '\n\n'
+    # Mistune 0.8.4 calls it header, not heading
+    header = heading
 
     def paragraph(self, text):
         return text + '\n\n'
