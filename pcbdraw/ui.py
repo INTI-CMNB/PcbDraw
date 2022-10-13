@@ -118,6 +118,8 @@ def run() -> None:
     help="Make drill holes transparent")
 @click.option("--side", type=click.Choice(["front", "back"]), default="front",
     help="Specify which side of the PCB to render")
+@click.option("--back", "-b", is_flag=True,
+    help="Alias for \"--side back\"")
 @click.option("--mirror", is_flag=True,
     help="Mirror the board")
 @click.option("--highlight", type=CommaList(), default=[],
@@ -154,7 +156,7 @@ def plot(input: str, output: str, style: Optional[str], libs: List[str],
          vcuts: bool, dpi: int, margin: float, silent: bool, werror: bool,
          resistor_values: List[str], resistor_flip: List[str], components: bool,
          paste: bool, outline_width: float, show_lib_paths: bool,
-         no_warn_back: bool) -> int:
+         no_warn_back: bool, back: bool) -> int:
     """
     Create a stylized drawing of the PCB.
     """
@@ -171,7 +173,7 @@ def plot(input: str, output: str, style: Optional[str], libs: List[str],
 
 
     plotter.libs = libs
-    plotter.render_back = side == "back"
+    plotter.render_back = side == "back" or back
     plotter.mirror = mirror
     plotter.margin = mm2ki(margin)
 
