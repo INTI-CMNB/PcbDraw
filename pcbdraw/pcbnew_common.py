@@ -1,18 +1,19 @@
+import sys
 from pcbnewTransition import pcbnew, isV6 # type: ignore
-from pcbnew import wxRect # type: ignore
+from pcbnewTransition.pcbnew import BOX2I # type: ignore
 from itertools import chain
 from typing import Optional, List
 import wx # type: ignore
 import os
 
-def getBBoxWithoutContours(edge: pcbnew.EDA_SHAPE) -> pcbnew.wxRect:
+def getBBoxWithoutContours(edge: pcbnew.EDA_SHAPE) -> pcbnew.BOX2I:
     width = edge.GetWidth()
     edge.SetWidth(0)
     bBox = edge.GetBoundingBox()
     edge.SetWidth(width)
     return bBox
 
-def findBoundingBox(edges: List[pcbnew.EDA_SHAPE]) -> pcbnew.wxRect:
+def findBoundingBox(edges: List[pcbnew.EDA_SHAPE]) -> pcbnew.BOX2I:
     """
     Return a bounding box of all drawings in edges
     """
@@ -23,10 +24,10 @@ def findBoundingBox(edges: List[pcbnew.EDA_SHAPE]) -> pcbnew.wxRect:
         boundingBox = combineBoundingBoxes(boundingBox, getBBoxWithoutContours(edge))
     return boundingBox
 
-def findBoardBoundingBox(board: pcbnew.BOARD) -> wxRect:
+def findBoardBoundingBox(board: pcbnew.BOARD) -> BOX2I:
     """
-    Returns a bounding box (wxRect) of all Edge.Cuts items either in
-    specified source area (wxRect) or in the whole board
+    Returns a bounding box (BOX2I) of all Edge.Cuts items either in
+    specified source area (BOX2I) or in the whole board
     """
     edges = collectEdges(board, "Edge.Cuts")
     return findBoundingBox(edges)
@@ -43,16 +44,13 @@ def collectEdges(board: pcbnew.BOARD, layerName: str) -> List[pcbnew.EDA_SHAPE]:
         edges.append(edge)
     return edges
 
-def combineBoundingBoxes(a: pcbnew.wxRect, b: pcbnew.wxRect) -> pcbnew.wxRect:
-    """ Retrun wxRect as a combination of source bounding boxes """
+def combineBoundingBoxes(a: pcbnew.BOX2I, b: pcbnew.BOX2I) -> pcbnew.BOX2I:
+    """ Retrun BOX2I as a combination of source bounding boxes """
     x1 = min(a.GetX(), b.GetX())
     y1 = min(a.GetY(), b.GetY())
     x2 = max(a.GetX() + a.GetWidth(), b.GetX() + b.GetWidth())
     y2 = max(a.GetY() + a.GetHeight(), b.GetY() + b.GetHeight())
-    # Beware that we cannot use the following code! It will add 1 to width and
-    # height. See https://github.com/wxWidgets/wxWidgets/blob/e43895e5317a1e82e295788264553d9839190337/src/common/gdicmn.cpp#L94-L114
-    # return wxRect(topLeft, bottomRight)
-    return wxRect(x1, y1, x2 - x1, y2 - y1)
+    return BOX2I(pcbnew.VECTOR2I(x1, y1), pcbnew.VECTOR2I(x2 - x1, y2 - y1))
 
 def fakeKiCADGui() -> Optional[wx.App]:
     """
@@ -63,6 +61,11 @@ def fakeKiCADGui() -> Optional[wx.App]:
     if os.name != "nt" and os.environ.get("DISPLAY", "").strip() == "":
         return None
 
-    app = wx.App()
-    app.InitLocale()
-    return app
+    sys.stdout = os.fdopen(os.dup(1), "w")
+    sys.stderr = os.fdopen(os.dup(2), "w")
+
+    os.dup2(os.open(os.devnull,os.O_RDWR), 1)
+    os.dup2(os.open(os.devnull,os.O_RDWR), 2)
+
+    return None
+

@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     name: "Run Pcbdraw tests"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -21,6 +21,7 @@ jobs:
             make git librsvg2-bin xvfb xdotool bats
           sudo python3 -m pip install mypy
           python3 -m pip install -e .\[dev\]
+      - run: mypy --version
       - run: make mypy
       - run: make test
       - run: make package
